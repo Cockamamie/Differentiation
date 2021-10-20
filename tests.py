@@ -1,147 +1,175 @@
 import unittest
 from differentiation import *
 from sympy import *
-import numpy as np
+
+if __name__ == '__main__':
+    unittest.main()
 
 values = [i * 0.1 for i in range(0, 50)]
 
 
 class Test(unittest.TestCase):
     def assert_dx_equal(self, func, to_dif: Dx):
-        x = Symbol('x')
-        eps = 1e-7
+        print(to_dif)
         d = to_dif.dx()
         print(f'expr before simplify = {str(d)}')
         expr = simplify(str(d))
         print(f'expr after simplify = {expr}')
-        for value in values:
-            try:
-                expected = (func(value + eps) - func(value)) / eps
-                actual = expr.evalf(subs={x: value})
-                self.assertAlmostEqual(expected, actual, delta=1e-3)
-            except ZeroDivisionError:
-                print('ZeroDivisionWarning')
+        func = simplify(str(func))
+        self.assertEqual(func, expr)
 
 
 class TestConstAndParam(unittest.TestCase):
     def test_const(self):
-        def func(x):
-            return 5
+        func = Const(0)
         to_dif = Const(5)
         Test().assert_dx_equal(func, to_dif)
 
     def test_param(self):
-        def func(x):
-            return x
+        func = Const(1)
         to_dif = X()
         Test().assert_dx_equal(func, to_dif)
 
 
 class TestAddition(unittest.TestCase):
     def test_const_const(self):
-        def func(x):
-            return 5 + 1
-        to_dif = Plus(Const(5), Const(1))
+        func = Const(0)
+        to_dif = Append(Const(5), Const(1))
         Test().assert_dx_equal(func, to_dif)
 
     def test_const_param(self):
-        def func(x):
-            return 2 + x
-        to_dif = Plus(Const(2), X())
+        func = Const(1)
+        to_dif = Append(Const(2), X())
         Test().assert_dx_equal(func, to_dif)
 
     def test_param_param(self):
-        def func(x):
-            return x + x
-        to_dif = Plus(X(), X())
+        func = Const(2)
+        to_dif = Append(X(), X())
         Test().assert_dx_equal(func, to_dif)
 
 
 class TestSubtraction(unittest.TestCase):
     def test_const_const(self):
-        def func(x):
-            return 5 - 1
+        func = Const(0)
         to_dif = Subtract(Const(5), Const(1))
         Test().assert_dx_equal(func, to_dif)
 
     def test_const_param(self):
-        def func(x):
-            return 2 - x
+        func = Const(-1)
         to_dif = Subtract(Const(2), X())
         Test().assert_dx_equal(func, to_dif)
 
     def test_param_param(self):
-        def func(x):
-            return x - x
+        func = Const(0)
         to_dif = Subtract(X(), X())
         Test().assert_dx_equal(func, to_dif)
 
 
 class TestMultiplication(unittest.TestCase):
     def test_const_const(self):
-        def func(x):
-            return 5 * 2
+        func = Const(0)
         to_dif = Multiply(Const(5), Const(2))
         Test().assert_dx_equal(func, to_dif)
 
     def test_const_param(self):
-        def func(x):
-            return 5 * x
+        func = Const(5)
         to_dif = Multiply(Const(5), X())
         Test().assert_dx_equal(func, to_dif)
 
     def test_param_param(self):
-        def func(x):
-            return x * x
+        func = Multiply(Const(2), X())
         to_dif = Multiply(X(), X())
         Test().assert_dx_equal(func, to_dif)
 
 
 class TestDivision(unittest.TestCase):
     def test_const_const(self):
-        def func(x):
-            return 5 / 2
+        func = Const(0)
         to_dif = Divide(Const(5), Const(2))
         Test().assert_dx_equal(func, to_dif)
 
     def test_const_param(self):
-        def func(x):
-            return 5 / x
+        func = Divide(Const(-5), Power(X(), Const(2)))
         to_dif = Divide(Const(5), X())
         Test().assert_dx_equal(func, to_dif)
 
     def test_param_param(self):
-        def func(x):
-            return x / x
+        func = Const(0)
         to_dif = Divide(X(), X())
         Test().assert_dx_equal(func, to_dif)
 
 
 class TestTrigonometry(unittest.TestCase):
     def test_sin_const(self):
-        def func(x):
-            return sin(5)
+        func = Const(0)
         to_dif = Sin(Const(5))
         Test().assert_dx_equal(func, to_dif)
 
     def test_sin_param(self):
-        def func(x):
-            return sin(x)
+        func = Cos(X())
         to_dif = Sin(X())
         Test().assert_dx_equal(func, to_dif)
 
     def test_cos_const(self):
-        def func(x):
-            return cos(5)
+        func = Const(0)
         to_dif = Cos(Const(5))
         Test().assert_dx_equal(func, to_dif)
 
     def test_cos_param(self):
-        def func(x):
-            return cos(x)
+        func = Multiply(Const(-1), Sin(X()))
         to_dif = Cos(X())
         Test().assert_dx_equal(func, to_dif)
 
+    def test_tan_const(self):
+        func = Const(0)
+        to_dif = Tan(Const(5))
+        Test().assert_dx_equal(func, to_dif)
 
-if __name__ == '__main__':
-    unittest.main()
+    def test_tan_param(self):
+        func = Divide(Const(1), Power(Cos(X()), Const(2)))
+        to_dif = Tan(X())
+        Test().assert_dx_equal(func, to_dif)
+
+    def test_cot_const(self):
+        func = Const(0)
+        to_dif = Cot(Const(5))
+        Test().assert_dx_equal(func, to_dif)
+
+    def test_cot_param(self):
+        func = Divide(Const(-1), Power(Sin(X()), Const(2)))
+        to_dif = Cot(X())
+        Test().assert_dx_equal(func, to_dif)
+
+
+class TestLogarithm(unittest.TestCase):
+    def test_const_const(self):
+        func = Const(0)
+        to_dif = Log(Const(2), Const(5))
+        Test().assert_dx_equal(func, to_dif)
+
+    def test_const_param(self):
+        func = Divide(Const(1), Multiply(Log(E, Const(2)), X()))
+        to_dif = Log(Const(2), X())
+        Test().assert_dx_equal(func, to_dif)
+
+    def test_param_const(self):
+        func = negate(Divide(Log(E, Const(2)), Multiply(X(), Power(Log(E, X()), Const(2)))))
+        to_dif = Log(X(), Const(2))
+        Test().assert_dx_equal(func, to_dif)
+
+    def test_param_param(self):
+        func = Const(0)
+        to_dif = Log(X(), X())
+        Test().assert_dx_equal(func, to_dif)
+
+
+class TestPower(unittest.TestCase):
+    def test_const_const(self):
+        func = Const(0)
+        to_dif = Power(Const(5), Const(2))
+        Test().assert_dx_equal(func, to_dif)
+
+    def test_param_const(self):
+        func = Multiply(Const(7), Power(X(), Const(6)))
+        to_dif = Power(X(), Const(7))
+        Test().assert_dx_equal(func, to_dif)
