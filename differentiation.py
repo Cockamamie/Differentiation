@@ -1,4 +1,5 @@
-from interfaces import *
+from sympy import E
+from interfaces import Dx, Binary, Unary
 
 
 def negate(arg: Dx):
@@ -13,7 +14,7 @@ class Const(Dx):
         return Const(0)
 
     def __str__(self):
-        return f'{self.value}'
+        return f'({self.value})'
 
 
 class X(Dx):
@@ -21,21 +22,21 @@ class X(Dx):
         return Const(1)
 
     def __str__(self):
-        return 'x'
+        return '(x)'
 
 
-class Plus(Dx, Binary):
+class Append(Dx, Binary):
     def __init__(self, left: Dx, right: Dx):
         self.left = left
         self.right = right
 
     def __str__(self):
-        return f'({self.left}+{self.right})'
+        return f'(({self.left})+({self.right}))'
 
     def dx(self):
         left_operand = self.left.dx()
         right_operand = self.right.dx()
-        return Plus(left_operand, right_operand)
+        return Append(left_operand, right_operand)
 
 
 class Subtract(Dx, Binary):
@@ -44,7 +45,7 @@ class Subtract(Dx, Binary):
         self.right = right
 
     def __str__(self):
-        return f'({self.left} - {self.right})'
+        return f'(({self.left}) - ({self.right}))'
 
     def dx(self):
         left_operand = self.left.dx()
@@ -58,20 +59,20 @@ class Multiply(Dx, Binary):
         self.right = right
 
     def __str__(self):
-        return f'({self.left} * {self.right})'
+        return f'(({self.left}) * ({self.right}))'
 
     def dx(self):
         left_derivative = self.left.dx()
         right_derivative = self.right.dx()
         left_operand = Multiply(left_derivative, self.right)
         right_operand = Multiply(self.left, right_derivative)
-        return Plus(left_operand, right_operand)
+        return Append(left_operand, right_operand)
 
 
 class Divide(Dx, Binary):
-    def __init__(self, left: Dx, right: Dx):
-        self.numerator = left
-        self.denominator = right
+    def __init__(self, numerator: Dx, denominator: Dx):
+        self.numerator = numerator
+        self.denominator = denominator
 
     def __str__(self):
         return f'(({self.numerator}) / ({self.denominator}))'
@@ -86,15 +87,20 @@ class Divide(Dx, Binary):
         return Divide(numerator, denominator)
 
 
-class Pow(Dx, Binary):  # TODO
-    def __init__(self, left: Dx, right: Dx):
-        pass
+class Power(Dx, Binary):
+    def __init__(self, base: Dx, exponent: Dx):
+        self.base = base
+        self.exponent = exponent
 
     def dx(self):
-        pass
+        if isinstance(self.base, Const) and not isinstance(self.exponent, Const):
+            return Multiply(Power(self.base, self.exponent), Log(Const(E), self.base))
+        if not isinstance(self.base, Const) and isinstance(self.exponent, Const):
+            return Multiply(self.exponent, Power(self.base, Const(self.exponent.value - 1)))
+        return Const(0)
 
     def __str__(self):
-        pass
+        return f'(({self.base})**({self.exponent}))'
 
 
 class Sin(Dx, Unary):
@@ -129,7 +135,7 @@ class Tan(Dx, Unary):
         return Multiply(tg_derivative, self.arg.dx())
 
     def __str__(self):
-        return f'tg({self.arg})'
+        return f'tan({self.arg})'
 
 
 class Cot(Dx, Unary):
@@ -142,4 +148,5 @@ class Cot(Dx, Unary):
         return Multiply(negate(ctg_derivative), self.arg.dx())
 
     def __str__(self):
-        return f'ctg({self.arg})'
+        return f'cot({self.arg})'
+
