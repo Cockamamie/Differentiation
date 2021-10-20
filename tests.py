@@ -1,113 +1,146 @@
-import math
 import unittest
-from differentiation import FuncType, BinaryType, OperandType, Func, Differentiation
-#import numpy as np
+from differentiation import *
+from sympy import *
+import numpy as np
+
+values = [i * 0.1 for i in range(0, 50)]
 
 
-# def assert_derivatives_equal(func):
-#     eps = 1e-7
-#     df = Differentiation().differentiate(func)
-#     for x in list(np.arange(0, 5, 0.1)):
-#         expected = (func(x + eps) - func(x)) / eps
-#         actual = df(x)
-#         assert abs(expected - actual) < 1e-5, f'{func.__name__}'
+class Test(unittest.TestCase):
+    def assert_dx_equal(self, func, to_dif: Dx):
+        x = Symbol('x')
+        eps = 1e-7
+        d = to_dif.dx()
+        print(f'expr before simplify = {str(d)}')
+        expr = simplify(str(d))
+        print(f'expr after simplify = {expr}')
+        for value in values:
+            try:
+                expected = (func(value + eps) - func(value)) / eps
+                actual = expr.evalf(subs={x: value})
+                self.assertAlmostEqual(expected, actual, delta=1e-3)
+            except ZeroDivisionError:
+                print('ZeroDivisionWarning')
 
 
-class TestSimpleDifferentiation(unittest.TestCase):
-    def test_constant(self):
-        func = Func(FuncType.constant, operands=[(OperandType.constant, 5)])
-        actual = Differentiation().differentiate(func)
-        expected = Func(FuncType.constant, operands=[(OperandType.constant, 0)])
-        self.assertEqual(expected, actual)
+class TestConstAndParam(unittest.TestCase):
+    def test_const(self):
+        def func(x):
+            return 5
+        to_dif = Const(5)
+        Test().assert_dx_equal(func, to_dif)
 
-    def test_parameter(self):
-        func = Func(FuncType.param, operands=[(OperandType.param, 1)])
-        actual = Differentiation().differentiate(func)
-        expected = Func(FuncType.constant, operands=[(OperandType.constant, 1)])
-        self.assertEqual(expected, actual)
-
-    def test_parameter_int_power(self):
-        def param_int_power(x): return x**5
-        self.assertEqual(expected, actual)
-
-    def test_parameter_rational_power(self):
-        def param_rational_power(x): return x**(3 / 7)
-        self.assertEqual(expected, actual)
-
-    def test_constant_power(self):
-        def const_power(x): return 6**7
-        self.assertEqual(expected, actual)
+    def test_param(self):
+        def func(x):
+            return x
+        to_dif = X()
+        Test().assert_dx_equal(func, to_dif)
 
 
-class TestFuncsDifferentiation(unittest.TestCase):
-    def test_log(self):
-        def log_2(x): return math.log(x, 2)
-        def log_e(x): return math.log(x, math.exp(1))
-        def log_5(x): return math.log(x, 5)
-        def log_10(x): return math.log(x, 5)
-        logs = [log_2, log_e, log_5, log_10]
-        for log in logs:
-            self.assertEqual(expected, actual)
+class TestAddition(unittest.TestCase):
+    def test_const_const(self):
+        def func(x):
+            return 5 + 1
+        to_dif = Plus(Const(5), Const(1))
+        Test().assert_dx_equal(func, to_dif)
 
-    def test_sin(self):
-        def sin(x): return math.sin(x)
-        self.assertEqual(expected, actual)
+    def test_const_param(self):
+        def func(x):
+            return 2 + x
+        to_dif = Plus(Const(2), X())
+        Test().assert_dx_equal(func, to_dif)
 
-    def test_cos(self):
-        def cos(x): return math.cos(x)
-        self.assertEqual(expected, actual)
-
-    def test_tan(self):
-        def tg(x): return math.tan(x)
-        self.assertEqual(expected, actual)
-
-    def test_cot(self):
-        def ctg(x): return 1 / math.tan(x)
-        self.assertEqual(expected, actual)
-
-    def test_arc_sin(self):
-        def asin(x): return math.asin(x)
-        self.assertEqual(expected, actual)
-
-    def test_arc_cos(self):
-        def acos(x): return math.acos(x)
-        self.assertEqual(expected, actual)
-
-    def test_arc_tan(self):
-        def atan(x): return math.atan(x)
-        self.assertEqual(expected, actual)
-
-    def test_arc_cot(self):
-        def acot(x): return math.pi / 2 - math.atan(x)
-        self.assertEqual(expected, actual)
+    def test_param_param(self):
+        def func(x):
+            return x + x
+        to_dif = Plus(X(), X())
+        Test().assert_dx_equal(func, to_dif)
 
 
-class TestSimpleBinaryOperationsDifferentiation(unittest.TestCase):
-    def test_adding_consts(self):
-        func = Func(FuncType.binary, binary_type=BinaryType.add,
-                    operands=[(OperandType.constant, 4), (OperandType.constant, 7)])
-        actual = Differentiation().differentiate(func)
-        expected = Func(FuncType.binary, binary_type=BinaryType.add,
-                        operands=[(OperandType.constant, 0), (OperandType.constant, 0)])
-        # TODO: 0+0 = 0 (упростить, если возможно)
-        self.assertEqual(expected, actual)
+class TestSubtraction(unittest.TestCase):
+    def test_const_const(self):
+        def func(x):
+            return 5 - 1
+        to_dif = Subtract(Const(5), Const(1))
+        Test().assert_dx_equal(func, to_dif)
 
-    def test_multiplying(self):
-        pass
+    def test_const_param(self):
+        def func(x):
+            return 2 - x
+        to_dif = Subtract(Const(2), X())
+        Test().assert_dx_equal(func, to_dif)
 
-    def test_subtracting(self):
-        func = Func(FuncType.binary, binary_type=BinaryType.subtract,
-                    operands=[(OperandType.constant, 4), (OperandType.constant, 7)])
-        actual = Differentiation.differentiate(func)
-        expected = Func(FuncType.binary, binary_type=BinaryType.subtract,
-                        operands=[(OperandType.constant, 0), (OperandType.constant, 0)])
-
-    def test_dividing(self):
-        pass
+    def test_param_param(self):
+        def func(x):
+            return x - x
+        to_dif = Subtract(X(), X())
+        Test().assert_dx_equal(func, to_dif)
 
 
-class TestParsing(unittest.TestCase):
-    pass
+class TestMultiplication(unittest.TestCase):
+    def test_const_const(self):
+        def func(x):
+            return 5 * 2
+        to_dif = Multiply(Const(5), Const(2))
+        Test().assert_dx_equal(func, to_dif)
+
+    def test_const_param(self):
+        def func(x):
+            return 5 * x
+        to_dif = Multiply(Const(5), X())
+        Test().assert_dx_equal(func, to_dif)
+
+    def test_param_param(self):
+        def func(x):
+            return x * x
+        to_dif = Multiply(X(), X())
+        Test().assert_dx_equal(func, to_dif)
+
+
+class TestDivision(unittest.TestCase):
+    def test_const_const(self):
+        def func(x):
+            return 5 / 2
+        to_dif = Divide(Const(5), Const(2))
+        Test().assert_dx_equal(func, to_dif)
+
+    def test_const_param(self):
+        def func(x):
+            return 5 / x
+        to_dif = Divide(Const(5), X())
+        Test().assert_dx_equal(func, to_dif)
+
+    def test_param_param(self):
+        def func(x):
+            return x / x
+        to_dif = Divide(X(), X())
+        Test().assert_dx_equal(func, to_dif)
+
+
+class TestTrigonometry(unittest.TestCase):
+    def test_sin_const(self):
+        def func(x):
+            return sin(5)
+        to_dif = Sin(Const(5))
+        Test().assert_dx_equal(func, to_dif)
+
+    def test_sin_param(self):
+        def func(x):
+            return sin(x)
+        to_dif = Sin(X())
+        Test().assert_dx_equal(func, to_dif)
+
+    def test_cos_const(self):
+        def func(x):
+            return cos(5)
+        to_dif = Cos(Const(5))
+        Test().assert_dx_equal(func, to_dif)
+
+    def test_cos_param(self):
+        def func(x):
+            return cos(x)
+        to_dif = Cos(X())
+        Test().assert_dx_equal(func, to_dif)
 
 
 if __name__ == '__main__':
