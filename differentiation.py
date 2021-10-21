@@ -159,13 +159,19 @@ class Log(Dx, Binary):
     def __str__(self):
         return f'log({self.base},{self.arg})'
 
+    @staticmethod
+    def extract_degree(arg):
+        if isinstance(arg, Power):
+            return Multiply(arg.exponent, Log(Const(2), arg.base))
+        return Log(Const(2), arg)
+
     def dx(self):
         if isinstance(self.base, Const):
             denominator = Multiply(self.arg, Log(Const(E), self.base))
             left = self.arg.dx()
             right = Divide(Const(1), denominator)
             return Multiply(left, right)
-        numerator = Log(Const(2), self.arg)
-        denominator = Log(Const(2), self.base)
+        numerator = self.extract_degree(self.arg)
+        denominator = self.extract_degree(self.base)
         return Divide(numerator, denominator).dx()
 
