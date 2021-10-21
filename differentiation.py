@@ -14,7 +14,7 @@ class Const(Dx):
         return Const(0)
 
     def __str__(self):
-        return f'({self.value})'
+        return f'{self.value}'
 
 
 class X(Dx):
@@ -22,7 +22,7 @@ class X(Dx):
         return Const(1)
 
     def __str__(self):
-        return '(x)'
+        return 'x'
 
 
 class Append(Dx, Binary):
@@ -31,7 +31,7 @@ class Append(Dx, Binary):
         self.right = right
 
     def __str__(self):
-        return f'(({self.left})+({self.right}))'
+        return f'({self.left}+{self.right})'
 
     def dx(self):
         left_operand = self.left.dx()
@@ -45,7 +45,7 @@ class Subtract(Dx, Binary):
         self.right = right
 
     def __str__(self):
-        return f'(({self.left}) - ({self.right}))'
+        return f'({self.left} - {self.right})'
 
     def dx(self):
         left_operand = self.left.dx()
@@ -59,7 +59,7 @@ class Multiply(Dx, Binary):
         self.right = right
 
     def __str__(self):
-        return f'(({self.left}) * ({self.right}))'
+        return f'({self.left} * {self.right})'
 
     def dx(self):
         left_derivative = self.left.dx()
@@ -75,7 +75,7 @@ class Divide(Dx, Binary):
         self.denominator = denominator
 
     def __str__(self):
-        return f'(({self.numerator}) / ({self.denominator}))'
+        return f'({self.numerator} / {self.denominator})'
 
     def dx(self):
         numerator_derivative = self.numerator.dx()
@@ -111,7 +111,7 @@ class Sin(Dx, Unary):
         return Multiply(Cos(self.arg), self.arg.dx())
 
     def __str__(self):
-        return f'cos({self.arg})'
+        return f'sin({self.arg})'
 
 
 class Cos(Dx, Unary):
@@ -122,7 +122,7 @@ class Cos(Dx, Unary):
         return Multiply(negate(Sin(self.arg)), self.arg.dx())
 
     def __str__(self):
-        return f'sin({self.arg})'
+        return f'cos({self.arg})'
 
 
 class Tan(Dx, Unary):
@@ -149,4 +149,23 @@ class Cot(Dx, Unary):
 
     def __str__(self):
         return f'cot({self.arg})'
+
+
+class Log(Dx, Binary):
+    def __init__(self, base: Dx, arg: Dx):
+        self.base = base
+        self.arg = arg
+
+    def __str__(self):
+        return f'log({self.base},{self.arg})'
+
+    def dx(self):
+        if isinstance(self.base, Const):
+            denominator = Multiply(self.arg, Log(Const(E), self.base))
+            left = self.arg.dx()
+            right = Divide(Const(1), denominator)
+            return Multiply(left, right)
+        numerator = Log(Const(2), self.arg)
+        denominator = Log(Const(2), self.base)
+        return Divide(numerator, denominator).dx()
 
