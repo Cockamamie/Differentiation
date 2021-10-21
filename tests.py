@@ -10,13 +10,16 @@ values = [i * 0.1 for i in range(0, 50)]
 
 class Test(unittest.TestCase):
     def assert_dx_equal(self, func, to_dif: Dx):
-        print(to_dif)
         d = to_dif.dx()
         print(f'expr before simplify = {str(d)}')
         expr = simplify(str(d))
         print(f'expr after simplify = {expr}')
         func = simplify(str(func))
-        self.assertEqual(func, expr)
+        print(f'{expr}, {func}')
+        if expr == 0:
+            self.assertEqual(0, func)
+            return
+        self.assertEqual(1, func / expr)
 
 
 class TestConstAndParam(unittest.TestCase):
@@ -162,6 +165,11 @@ class TestLogarithm(unittest.TestCase):
         to_dif = Log(X(), X())
         Test().assert_dx_equal(func, to_dif)
 
+    def test_param_param_func_func(self):
+        func = Const(0)
+        to_dif = Log(Power(X(), Const(2)), Power(X(), Const(3)))
+        Test().assert_dx_equal(func, to_dif)
+
 
 class TestPower(unittest.TestCase):
     def test_const_const(self):
@@ -169,7 +177,13 @@ class TestPower(unittest.TestCase):
         to_dif = Power(Const(5), Const(2))
         Test().assert_dx_equal(func, to_dif)
 
+    def test_const_const_rational_exp(self):
+        func = Const(0)
+        to_dif = Power(Const(5), Const(1/2))
+        Test().assert_dx_equal(func, to_dif)
+
     def test_param_const(self):
         func = Multiply(Const(7), Power(X(), Const(6)))
         to_dif = Power(X(), Const(7))
         Test().assert_dx_equal(func, to_dif)
+
