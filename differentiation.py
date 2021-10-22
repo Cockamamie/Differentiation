@@ -93,11 +93,9 @@ class Power(Dx, Binary):
         self.exponent = exponent
 
     def dx(self):
-        if isinstance(self.base, Const) and not isinstance(self.exponent, Const):
-            return Multiply(Power(self.base, self.exponent), Log(Const(E), self.base))
-        if not isinstance(self.base, Const) and isinstance(self.exponent, Const):
-            return Multiply(self.exponent, Power(self.base, Const(self.exponent.value - 1)))
-        return Const(0)
+        left = Multiply(Multiply(self.exponent, Power(self.base, Subtract(self.exponent, Const(1)))), self.base.dx())
+        right = Multiply(Power(self.base, self.exponent), Multiply(Log(E, self.base), self.exponent.dx()))
+        return Append(left, right)
 
     def __str__(self):
         return f'(({self.base})**({self.exponent}))'
