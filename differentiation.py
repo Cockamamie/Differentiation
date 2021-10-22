@@ -1,9 +1,11 @@
-from sympy import E
+from sympy import E, simplify
 from interfaces import Dx, Binary, Unary
 
 
-def negate(arg: Dx):
-    return Multiply(Const(-1), arg)
+def differentiate(root): return simplify(str(root.dx()))
+
+
+def negate(arg: Dx): return Multiply(Const(-1), arg)
 
 
 class Const(Dx):
@@ -151,6 +153,10 @@ class Cot(Dx, Unary):
 
 class Log(Dx, Binary):
     def __init__(self, base: Dx, arg: Dx):
+        if isinstance(base, Const) and (base.value == 1 or base.value <= 0):
+            raise ValueError('Logarithm base must be greater than zero and not equal to one')
+        if isinstance(arg, Const) and arg.value <= 0:
+            raise ValueError('Logarithm argument must be greater than zero')
         self.base = base
         self.arg = arg
 
@@ -172,4 +178,3 @@ class Log(Dx, Binary):
         numerator = self.extract_degree(self.arg)
         denominator = self.extract_degree(self.base)
         return Divide(numerator, denominator).dx()
-

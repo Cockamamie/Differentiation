@@ -1,11 +1,7 @@
 import unittest
 from differentiation import *
 from sympy import *
-
-if __name__ == '__main__':
-    unittest.main()
-
-values = [i * 0.1 for i in range(0, 50)]
+from expression_parser import parse
 
 
 class Test(unittest.TestCase):
@@ -114,7 +110,8 @@ class TestDivision(unittest.TestCase):
         Test().assert_dx_equal(func, to_dif)
 
     def test_param_param_expression(self):
-        func = Divide(Subtract(Multiply(Cos(Append(X(), Const(3))), X()), Sin(Append(X(), Const(3)))), Power(X(), Const(2)))
+        func = Divide(Subtract(Multiply(Cos(Append(X(), Const(3))), X()), Sin(Append(X(), Const(3)))),
+                      Power(X(), Const(2)))
         to_dif = Divide(Sin(Append(X(), Const(3))), X())
         Test().assert_dx_equal(func, to_dif)
 
@@ -132,7 +129,7 @@ class TestTrigonometry(unittest.TestCase):
 
     def test_sin_param_expression(self):
         func = Multiply(Multiply(Const(2), X()), Cos(Append(Power(X(), Const(2)), Sin(Const(9)))))
-        to_dif = Sin(Append(Power(X(),Const(2)), Sin(Const(9))))
+        to_dif = Sin(Append(Power(X(), Const(2)), Sin(Const(9))))
         Test().assert_dx_equal(func, to_dif)
 
     def test_cos_const(self):
@@ -223,7 +220,7 @@ class TestPower(unittest.TestCase):
 
     def test_const_const_rational_exp(self):
         func = Const(0)
-        to_dif = Power(Const(5), Const(1/2))
+        to_dif = Power(Const(5), Const(1 / 2))
         Test().assert_dx_equal(func, to_dif)
 
     def test_param_const(self):
@@ -260,4 +257,66 @@ class TestPower(unittest.TestCase):
         print(simplify(str(to_dif)))
         Test().assert_dx_equal(func, to_dif)
 
+    def test_param_const_rational_exp(self):
+        func = Divide(Const(1), Multiply(Const(2), Power(X(), Const(1 / 2))))
+        to_dif = Power(X(), Const(1 / 2))
+        Test().assert_dx_equal(func, to_dif)
 
+
+def replace_all(expressions, to_replace, replacer):
+    return [expr.replace(to_replace, replacer) for expr in expressions]
+
+
+class TestParser(unittest.TestCase):
+    def assert_parsed_equals_expr(self, expr):
+        parsed = parse(expr)
+        self.assertEqual(sympify(expr), simplify(str(parsed)))
+
+    def test_const(self):
+        expression = '2'
+        self.assert_parsed_equals_expr(expression)
+
+    def test_param(self):
+        expression = 'x'
+        self.assert_parsed_equals_expr(expression)
+
+    const_expressions = ['1~2', '1 ~ 2', '(1~2)', '(1) ~ (2)']
+    param_const_expressions = ['x~2', 'x ~ 2', '(x~2)', '(x) ~ (2)']
+    param_param_expressions = ['x~x', 'x ~ x', '(x~x)', '(x) ~ (x)']
+
+    def assert_expressions(self, expressions):
+        for expression in expressions:
+            expr = expression
+            self.assert_parsed_equals_expr(expr)
+
+    def test_add_consts(self):
+        self.assert_expressions(replace_all(self.const_expressions, '~', '+'))
+
+    def test_subtract_consts(self):
+        self.assert_expressions(replace_all(self.const_expressions, '~', '-'))
+
+    def test_multiply_consts(self):
+        self.assert_expressions(replace_all(self.const_expressions, '~', '*'))
+
+    def test_divide_consts(self):
+        self.assert_expressions(replace_all(self.const_expressions, '~', '/'))
+
+    def test_add_params(self):
+        self.assert_expressions(replace_all(self.param_const_expressions, '~', '+'))
+        self.assert_expressions(replace_all(self.param_param_expressions, '~', '+'))
+
+    def test_subtract_params(self):
+        self.assert_expressions(replace_all(self.param_const_expressions, '~', '-'))
+        self.assert_expressions(replace_all(self.param_param_expressions, '~', '-'))
+
+    def test_multiply_params(self):
+        self.assert_expressions(replace_all(self.param_const_expressions, '~', '*'))
+        self.assert_expressions(replace_all(self.param_param_expressions, '~', '*'))
+
+    def test_divide_params(self):
+        self.assert_expressions(replace_all(self.param_const_expressions, '~', '/'))
+        self.assert_expressions(replace_all(self.param_param_expressions, '~', '/'))
+
+
+if __name__ == '__main__':
+    unittest.main()
