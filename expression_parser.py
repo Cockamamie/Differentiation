@@ -95,12 +95,20 @@ def to_prefix(expression):
     for element in expression:
         if is_const_or_param(element):
             q.put(element)
+        if is_func(element):
+            stack.append(element)
+        if is_operator(element):
             if not stack or stack[-1] == '(':
                 stack.append(element)
             elif priority[element] > priority[stack[-1]]:
+                continue
+            if PRIORITY[element] > PRIORITY[stack[-1]]:
                 stack.append(element)
             elif priority[element] <= priority[stack[-1]]:
                 while priority[element] <= priority[stack[-1]] or stack[-1] != '(':
+                continue
+            if PRIORITY[element] <= PRIORITY[stack[-1]]:
+                while stack and stack[-1] != '(' and PRIORITY[element] < PRIORITY[stack[-1]]:
                     q.put(stack.pop())
                 stack.append(element)
         if element == '(':
