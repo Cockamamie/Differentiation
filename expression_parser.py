@@ -1,6 +1,18 @@
 from re import findall
 from differentiation import *
 import queue
+from queue import Queue
+from sympy import E, pi
+
+OPERATORS = ['+', '-', '*', '/', '^']
+FUNCS = ['sin', 'cos', 'tan', 'cot', 'log']
+PRIORITY = {'(': 0, ')': 0,
+            '+': 1, '-': 1,
+            '*': 2, '/': 2,
+            '^': 3,
+            'sin': 4, 'cos': 4,
+            'tan': 4, 'cot': 4,
+            'log': 4}
 
 operators = ['+', '-', '*', '/', '^']
 funcs = ['sin', 'cos', 'tan', 'cot', 'log']
@@ -18,15 +30,36 @@ def parse(expression):
     return root
 
 
+def is_const(s): return s.isdigit() or s in ['pi', 'E']
+
+
+def is_param(s): return s == 'x'
+
+
+def is_func(s): return s in FUNCS
+
+
+def is_operator(s): return s in OPERATORS
+
+
+def is_const_or_param(s): return is_const(s) or is_param(s)
+
+
+def is_operator_or_func(s): return is_operator(s) or is_func(s)
+
+
 def simplify(expression):
     expression = expression.replace(' ', '')
     # TODO remove redundant brackets
     # TODO replace ln(x) and lg(x) with log(e,x) and log(10, x)
+    expression = expression.replace('ln(', 'log(e,')
+    expression = expression.replace('lg(', 'log(10,')
     return expression
 
 
 def split(expression):
     pattern = r'\d+|x|\+|\-|\*|\/|\^|sin|cos|tan|cot|log|\(|\)'
+    pattern = r'\d+|E|pi|x|\+|\-|\*|\/|\^|sin|cos|tan|cot|log|\(|\)'
     return findall(pattern, expression)
 
 
@@ -46,11 +79,11 @@ def to_prefix(expression):
                 'log': 2,
                 '^': 3}
     q = queue.Queue()
+    q = Queue()
     stack = []
     for element in expression:
         if is_const_or_param(element):
             q.put(element)
-        if is_operator_or_func(element):
             if not stack or stack[-1] == '(':
                 stack.append(element)
             elif priority[element] > priority[stack[-1]]:
@@ -79,7 +112,12 @@ def is_binary(operator):
 
 def is_unary(operator):
     return operator in funcs[:len(funcs) - 1]
+def to_tree(prefix_expr):
+    def is_binary(operator):
+        return operator in OPERATORS + ['log']
 
+    def is_unary(operator):
+        return operator in FUNCS[:len(FUNCS) - 1]
 
 def to_tree(prefix_expr):
     class_by_name = {'+': Append, '-': Subtract,
@@ -94,6 +132,12 @@ def to_tree(prefix_expr):
                 stack.append(X())
             else:
                 stack.append(Const(int(element)))
+                if element.isdigit():
+                    stack.append(Const(int(element)))
+                if element == 'E':
+                    stack.append(Const(E))
+                if element == 'pi':
+                    stack.append(Const(pi))
         if is_unary(element):
             arg = stack.pop()
             stack.append(class_by_name[element](arg))
