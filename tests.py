@@ -7,11 +7,8 @@ from expression_parser import parse
 class Test(unittest.TestCase):
     def assert_dx_equal(self, func, to_dif: Dx):
         d = to_dif.dx()
-        print(f'expr before simplify = {str(d)}')
         expr = simplify(str(d))
-        print(f'expr after simplify = {expr}')
         func = simplify(str(func))
-        print(f'{expr}, {func}')
         if expr == 0:
             self.assertEqual(0, func)
             return
@@ -267,7 +264,7 @@ def replace_all(expressions, to_replace, replacer):
     return [expr.replace(to_replace, replacer) for expr in expressions]
 
 
-class TestParser(unittest.TestCase):
+class TestSimpleParsing(unittest.TestCase):
     def assert_parsed_equals_expr(self, expr):
         parsed = parse(expr)
         self.assertEqual(sympify(expr), simplify(str(parsed)))
@@ -317,6 +314,55 @@ class TestParser(unittest.TestCase):
         self.assert_expressions(replace_all(self.param_const_expressions, '~', '/'))
         self.assert_expressions(replace_all(self.param_param_expressions, '~', '/'))
 
+    def test_trigonometric(self):
+        sin_x = 'sin(x)'
+        cos_x = 'cos(x)'
+        tan_x = 'tan(x)'
+        cot_x = 'cot(x)'
+        self.assert_parsed_equals_expr(sin_x)
+        self.assert_parsed_equals_expr(cos_x)
+        self.assert_parsed_equals_expr(tan_x)
+        self.assert_parsed_equals_expr(cot_x)
+
+
+class TestComplexParsing(unittest.TestCase):
+    def test_many(self):
+        expressions = ['sin(x+3)',
+                       'sin(pi-E)',
+                       'sin(pi*E)',
+                       '2*sin(x)',
+                       'sin(sin(x))',
+                       'sin(x+10/5)',
+                       'sin(x*6)^2',
+                       '1+sin(2*x)-x',
+                       'sin(5)*sin(x)',
+                       'sin(5)^sin(x)',
+                       'sin(x)/(2*x^4)',
+                       'sin(E^pi)^(x/5)']
+        for expr in expressions:
+            parsed = parse(expr)
+            self.assertEqual(sympify(expr), simplify(str(parsed)))
+
+
+class TestNoMultiSign(unittest.TestCase):
+    def test_many(self):
+        expressions = {'2x': '2*x',
+                       '2(x+3)': '2*(x+3)',
+                       '2sin(x)+x': '2*sin(x)+x',
+                       'xx': 'x*x',
+                       'x(2+x)': 'x*(2+x)',
+                       'x3': 'x*3',
+                       'xsin(x)': 'x*sin(x)',
+                       '(x+1)(2^x+1)': '(x+1)*(2^x+1)',
+                       '(x+1)x+1': '(x+1)*x+1',
+                       '(x+1)sin(x)': '(x+1)*sin(x)',
+                       'sinx': 'sin(x)',
+                       'sinx+x': 'sin(x)+x',
+                       'sin2x+x': 'sin(2*x)+x',
+                       'sinx^3': 'sin(x^3)'}
+        for expr, sympy_expr in expressions.items():
+            parsed = parse(expr)
+            self.assertEqual(sympify(sympy_expr), simplify(str(parsed)))
 
 if __name__ == '__main__':
     unittest.main()
