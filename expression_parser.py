@@ -26,6 +26,8 @@ def parse(expression):
     split_expression = split(expression)
     prefix_expression = to_prefix(split_expression)
     print(prefix_expression)
+    split_expr = split_expression(expression)
+    prefix_expression = to_prefix(split_expr)
     root = to_tree(prefix_expression)
     return root
 
@@ -68,6 +70,15 @@ def is_const_or_param(s): return s.isdigit() or s == 'x'
 
 def is_operator_or_func(s):
     return s in operators or s in funcs
+def split_expression(expression):
+    simplified = simplify(expression.lower()).replace('e', 'E')
+    split_expr = split(simplified)
+    reminder = simplified
+    for e in split_expr:
+        reminder = reminder.replace(e, '')
+    if len(reminder) > 0:
+        raise InvalidExpressionError
+    return split_expr
 
 
 def to_prefix(expression):
