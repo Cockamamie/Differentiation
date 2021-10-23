@@ -5,6 +5,9 @@ import queue
 operators = ['+', '-', '*', '/', '^']
 funcs = ['sin', 'cos', 'tan', 'cot', 'log']
 
+class InvalidExpressionError(Exception):
+    pass
+
 
 def parse(expression):
     expression = simplify(expression)
@@ -98,4 +101,6 @@ def to_tree(prefix_expr):
             right = stack.pop()
             left = stack.pop()
             stack.append(class_by_name[element](left, right))
+    if len(stack) > 1:
+        raise InvalidExpressionError
     return stack[0]
