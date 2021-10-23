@@ -28,6 +28,8 @@ def parse(expression):
     print(prefix_expression)
     split_expr = split_expression(expression)
     prefix_expression = to_prefix(split_expr)
+    multiplied = place_multi_sign(bracketed)
+    prefix_expression = to_prefix(multiplied)
     root = to_tree(prefix_expression)
     return root
 
@@ -79,6 +81,24 @@ def split_expression(expression):
     if len(reminder) > 0:
         raise InvalidExpressionError
     return split_expr
+
+
+def place_multi_sign(split_expr):
+    multiplied = list(split_expr)
+    length = len(multiplied)
+    index = 1
+    while index < length:
+        current = multiplied[index]
+        previous = multiplied[index - 1]
+        previous_condition = previous == ')' or is_param(previous) or is_const(previous)
+        current_condition = current == '(' or (not is_operator(current) and current != ')')
+        if previous_condition and current_condition:
+            multiplied.insert(index, '*')
+            index += 2
+            length = len(multiplied)
+            continue
+        index += 1
+    return multiplied
 
 
 def to_prefix(expression):
