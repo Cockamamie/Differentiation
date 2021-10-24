@@ -345,6 +345,7 @@ class TestComplexParsing(unittest.TestCase):
 
 
 class TestNoMultiSign(unittest.TestCase):
+class TestNoMultiSignAndBrackets(unittest.TestCase):
     def test_many(self):
         expressions = {'2x': '2*x',
                        '2(x+3)': '2*(x+3)',
