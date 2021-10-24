@@ -20,6 +20,7 @@ class InvalidExpressionError(Exception):
 
 def parse(expression):
     split_expr = split_expression(expression)
+    bracketed = place_func_arg_brackets(split_expr)
     multiplied = place_multi_sign(bracketed)
     prefix_expression = to_prefix(multiplied)
     root = to_tree(prefix_expression)
@@ -65,6 +66,37 @@ def split_expression(expression):
     if len(reminder) > 0:
         raise InvalidExpressionError
     return split_expr
+
+
+def get_args_len(bracketed):
+    length = 0
+    current = bracketed[0]
+    while is_const_or_param(current) or PRIORITY[current] > PRIORITY['+']:
+        length += 1
+        if length >= len(bracketed):
+            break
+        current = bracketed[length]
+    print(f'{length = }')
+    return length
+
+
+def place_func_arg_brackets(split_expr):  # TODO у логарифма аргументы по-другому
+    bracketed = list(split_expr)
+    i = 0
+    length = len(bracketed)
+    while i < length:
+        print(f'{bracketed = }')
+        current = bracketed[i]
+        if is_func(current) and bracketed[i + 1] != '(':
+            bracketed.insert(i + 1, '(')
+            if current != 'log':
+                right_parenthesis_index = i + 1 + get_args_len(bracketed[i + 2:]) + 1
+                bracketed.insert(right_parenthesis_index, ')')
+                length = len(bracketed)
+                i += 1
+                continue
+        i += 1
+    return bracketed
 
 
 def place_multi_sign(split_expr):
