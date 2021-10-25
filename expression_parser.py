@@ -1,3 +1,4 @@
+import sys
 from re import findall
 from differentiation import *
 from queue import Queue
@@ -25,6 +26,7 @@ def parse(expression):
     multiplied = place_multi_sign(bracketed)
     prefix_expression = to_prefix(multiplied)
     root = to_tree(prefix_expression)
+
     return root
 
 
@@ -48,13 +50,11 @@ def is_operator_or_func(s): return is_operator(s) or is_func(s)
 
 def simplify(expression):
     expression = expression.replace(' ', '')
-    expression = expression.replace('ln(', 'log(e,')
-    expression = expression.replace('lg(', 'log(10,')
     return expression
 
 
 def split(expression):
-    pattern = r'\d+|E|pi|x|\+|\-|\*|\/|\^|sin|cos|tan|cot|log|\(|\)'
+    pattern = r'\d+|E|pi|x|\+|\-|\*|\/|\^|sin|cos|tan|cot|\(|\)'
     return findall(pattern, expression)
 
 
@@ -81,7 +81,7 @@ def get_args_len(bracketed):
     return length
 
 
-def place_func_arg_brackets(split_expr):  # TODO у логарифма аргументы по-другому
+def place_func_arg_brackets(split_expr):
     bracketed = list(split_expr)
     i = 0
     length = len(bracketed)
@@ -90,7 +90,7 @@ def place_func_arg_brackets(split_expr):  # TODO у логарифма аргу�
         current = bracketed[i]
         if is_func(current) and bracketed[i + 1] != '(':
             bracketed.insert(i + 1, '(')
-            if current != 'log':
+            if is_unary(current):
                 right_parenthesis_index = i + 1 + get_args_len(bracketed[i + 2:]) + 1
                 bracketed.insert(right_parenthesis_index, ')')
                 length = len(bracketed)
@@ -155,13 +155,15 @@ def to_prefix(expression):
     return res
 
 
+def is_binary(operator):
+    return operator in OPERATORS
+
+
+def is_unary(operator):
+    return operator in FUNCS[:len(FUNCS) - 1]
+
+
 def to_tree(prefix_expr):
-    def is_binary(operator):
-        return operator in OPERATORS + ['log']
-
-    def is_unary(operator):
-        return operator in FUNCS[:len(FUNCS) - 1]
-
     class_by_name = {'+': Append, '-': Subtract,
                      '*': Multiply, '/': Divide,
                      'sin': Sin, 'cos': Cos,
