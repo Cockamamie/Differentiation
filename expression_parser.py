@@ -72,7 +72,7 @@ def split_expression(expression):
 def get_args_len(bracketed):
     length = 0
     current = bracketed[0]
-    while is_const_or_param(current) or PRIORITY[current] > PRIORITY['+']:
+    while (is_const_or_param(current) or PRIORITY[current] > PRIORITY['+']) and not is_func(current):
         length += 1
         if length >= len(bracketed):
             break
