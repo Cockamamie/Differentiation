@@ -344,7 +344,6 @@ class TestComplexParsing(unittest.TestCase):
             self.assertEqual(sympify(expr), simplify(str(parsed)))
 
 
-class TestNoMultiSign(unittest.TestCase):
 class TestNoMultiSignAndBrackets(unittest.TestCase):
     def test_many(self):
         expressions = {'2x': '2*x',
@@ -360,16 +359,16 @@ class TestNoMultiSignAndBrackets(unittest.TestCase):
                        'sinx': 'sin(x)',
                        'sinx+x': 'sin(x)+x',
                        'sin2x+x': 'sin(2*x)+x',
-                       'sinx^3': 'sin(x^3)'}
                        'sinx^3': 'sin(x^3)',
-                       'sinxsinx': 'sin(x*sin(x))',
-                       'sin2xsin(x+1)': 'sin(2*x*sin(x+1))',
-                       'sin2xsin(x+1)*2+1': 'sin(2*x*sin(x+1)*2)+1',
+                       'sinxsinx': 'sin(x)*sin(x)',
+                       'sin2xsin(x+1)': 'sin(2*x)*sin(x+1)',
+                       'sin2xsin(x+1)*2+1': 'sin(2*x)*sin(x+1)*2+1',
                        'sin2x+sin(xsin(x+1))': 'sin(2*x)+sin(x*sin(x+1))',
                        'sin2x+sin(xsinx)+1': 'sin(2*x)+sin(x*sin(x))+1'}
         for expr, sympy_expr in expressions.items():
             parsed = parse(expr)
             self.assertEqual(sympify(sympy_expr), simplify(str(parsed)))
+
 
 if __name__ == '__main__':
     unittest.main()
