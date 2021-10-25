@@ -14,8 +14,9 @@ PRIORITY = {'(': 0, ')': 0,
             'log': 4}
 
 
-class InvalidExpressionError(Exception):
-    pass
+def invalid_expression():
+    print('Error: Invalid expression')
+    sys.exit(1)
 
 
 def parse(expression):
@@ -64,7 +65,7 @@ def split_expression(expression):
     for e in split_expr:
         reminder = reminder.replace(e, '')
     if len(reminder) > 0:
-        raise InvalidExpressionError
+        invalid_expression()
     return split_expr
 
 
@@ -139,9 +140,13 @@ def to_prefix(expression):
         if element == '(':
             stack.append(element)
         if element == ')':
+            if '(' not in stack:
+                invalid_expression()
             while stack[-1] != '(':
                 q.put(stack.pop())
             stack.pop()
+    if ')' in stack or '(' in stack:
+        invalid_expression()
     while stack:
         q.put(stack.pop())
     res = []
@@ -182,5 +187,5 @@ def to_tree(prefix_expr):
             left = stack.pop()
             stack.append(class_by_name[element](left, right))
     if len(stack) > 1:
-        raise InvalidExpressionError
+        invalid_expression()
     return stack[0]
