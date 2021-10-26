@@ -77,7 +77,7 @@ class Divide(Dx, Binary):
         self.denominator = denominator
 
     def __str__(self):
-        return f'({self.numerator} / {self.denominator})'
+        return f'(({self.numerator}) / ({self.denominator}))'
 
     def dx(self):
         numerator_derivative = self.numerator.dx()
@@ -100,7 +100,7 @@ class Power(Dx, Binary):
         return Append(left, right)
 
     def __str__(self):
-        return f'(({self.base})**({self.exponent}))'
+        return f'(({self.base})^({self.exponent}))'
 
 
 class Sin(Dx, Unary):
