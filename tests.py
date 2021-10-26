@@ -208,6 +208,14 @@ class TestLogarithm(unittest.TestCase):
         to_dif = Log(Log(Const(E), X()), X())
         Test().assert_dx_equal(func, to_dif)
 
+    def test_ln_fraction(self):
+        func_numerator = Subtract(Subtract(Power(X(), Const(2)), Multiply(Const(2), X())), Const(4))
+        func_denominator = Append(Subtract(Power(X(), Const(3)), Power(X(), Const(2))),
+                                  Subtract(Multiply(Const(4), X()), Const(4)))
+        func = Divide(func_numerator, func_denominator)
+        to_dif = Log(Const(E), Divide(Append(Power(X(), Const(2)), Const(4)), Subtract(X(), Const(1))))
+        Test().assert_dx_equal(func, to_dif)
+
 
 class TestPower(unittest.TestCase):
     def test_const_const(self):
@@ -267,7 +275,7 @@ def replace_all(expressions, to_replace, replacer):
 class TestSimpleParsing(unittest.TestCase):
     def assert_parsed_equals_expr(self, expr):
         parsed = parse(expr)
-        self.assertEqual(sympify(expr), simplify(str(parsed)))
+        self.assertEqual(simplify(expr), simplify(str(parsed)))
 
     def test_const(self):
         expression = '2'
@@ -324,6 +332,14 @@ class TestSimpleParsing(unittest.TestCase):
         self.assert_parsed_equals_expr(tan_x)
         self.assert_parsed_equals_expr(cot_x)
 
+    def test_logs(self):
+        log2x = 'log(2,x)'
+        lgx = 'log(10,x)'
+        lnx = 'log(e,x)'
+        self.assert_parsed_equals_expr(log2x)
+        self.assert_parsed_equals_expr(lgx)
+        self.assertEqual(sympify('1/log(x)'), simplify(str(parse(lnx))))
+
 
 class TestComplexParsing(unittest.TestCase):
     def test_many(self):
@@ -364,7 +380,10 @@ class TestNoMultiSignAndBrackets(unittest.TestCase):
                        'sin2xsin(x+1)': 'sin(2*x)*sin(x+1)',
                        'sin2xsin(x+1)*2+1': 'sin(2*x)*sin(x+1)*2+1',
                        'sin2x+sin(xsin(x+1))': 'sin(2*x)+sin(x*sin(x+1))',
-                       'sin2x+sin(xsinx)+1': 'sin(2*x)+sin(x*sin(x))+1'}
+                       'sin2x+sin(xsinx)+1': 'sin(2*x)+sin(x*sin(x))+1',
+                       'ln((x^2+4)/(x-1))': 'log(E)/log((x^2+4)/(x-1))',
+                       'lg(xsin(x^2)/x^2)': 'log(10)/log(x*sin(x^2)/x^2)',
+                       'log(5, sin(x))': 'log(5)/log(sin(x))'}
         for expr, sympy_expr in expressions.items():
             parsed = parse(expr)
             self.assertEqual(sympify(sympy_expr), simplify(str(parsed)))
