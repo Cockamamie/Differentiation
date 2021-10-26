@@ -48,13 +48,56 @@ def is_const_or_param(s): return is_const(s) or is_param(s)
 def is_operator_or_func(s): return is_operator(s) or is_func(s)
 
 
+def insert(expression, index, symbol):
+    return expression[:index] + symbol + expression[index:]
+
+
+def place_ln_lg_brackets(expression):
+    in_brackets = [str(i) for i in range(0, 10)] + ['x', '*', '^', '/']
+    for i, symbol in enumerate(expression[:len(expression) - 1]):
+        log_challenger = symbol + expression[i + 1]
+        if (log_challenger == 'ln' or log_challenger == 'lg') and expression[i + 2] != '(':
+            expression = insert(expression, i + 2, '(')
+            index = i + 2
+            while expression[index] in in_brackets:
+                index += 1
+                if index >= len(expression):
+                    break
+            expression = insert(expression, index + 2, ')')
+
+
+def place_log_args_brackets(expression):
+    for i in range(len(expression) - 3):
+        log_challenger = expression[i] + expression[i + 1] + expression[i + 2]
+        if log_challenger == 'log':
+            expression = insert(expression, i + 4, '(')
+            brackets_count = 1
+            index = i + 5
+            while brackets_count > 0:
+                if expression[index] == '(':
+                    brackets_count += 1
+                if expression[index] == ')':
+                    brackets_count -= 1
+                if expression[index] == ',':
+                    expression = insert(expression, index, ')')
+                    expression = insert(expression, index + 2, '(')
+                    index += 3
+                index += 1
+            expression = insert(expression, index, ')')
+    return expression
+
+
 def simplify(expression):
     expression = expression.replace(' ', '')
+    place_ln_lg_brackets(expression)
+    expression = expression.replace('ln(', 'log(e,')
+    expression = expression.replace('lg(', 'log(10,')
+    expression = place_log_args_brackets(expression)
     return expression
 
 
 def split(expression):
-    pattern = r'\d+|E|pi|x|\+|\-|\*|\/|\^|sin|cos|tan|cot|\(|\)'
+    pattern = r'\d+|E|pi|x|\+|\-|\*|\/|\^|sin|cos|tan|cot|log|\(|\)|,'
     return findall(pattern, expression)
 
 
@@ -62,9 +105,10 @@ def split_expression(expression):
     simplified = simplify(expression.lower()).replace('e', 'E')
     split_expr = split(simplified)
     reminder = simplified
+    logs_count = simplified.count('log')
     for e in split_expr:
         reminder = reminder.replace(e, '')
-    if len(reminder) > 0:
+    if len(reminder) - logs_count > 0:
         invalid_expression()
     return split_expr
 
@@ -77,7 +121,6 @@ def get_args_len(bracketed):
         if length >= len(bracketed):
             break
         current = bracketed[length]
-    print(f'{length = }')
     return length
 
 
@@ -86,16 +129,13 @@ def place_func_arg_brackets(split_expr):
     i = 0
     length = len(bracketed)
     while i < length:
-        print(f'{bracketed = }')
         current = bracketed[i]
-        if is_func(current) and bracketed[i + 1] != '(':
+        if is_func(current) and is_unary(current) and bracketed[i + 1] != '(':
             bracketed.insert(i + 1, '(')
-            if is_unary(current):
-                right_parenthesis_index = i + 1 + get_args_len(bracketed[i + 2:]) + 1
-                bracketed.insert(right_parenthesis_index, ')')
-                length = len(bracketed)
-                i += 1
-                continue
+            right_parenthesis_index = i + 1 + get_args_len(bracketed[i + 2:]) + 1
+            bracketed.insert(right_parenthesis_index, ')')
+            length = len(bracketed)
+            i += 1
         i += 1
     return bracketed
 
@@ -109,7 +149,7 @@ def place_multi_sign(split_expr):
         previous = multiplied[index - 1]
         previous_condition = previous == ')' or is_param(previous) or is_const(previous)
         current_condition = current == '(' or (not is_operator(current) and current != ')')
-        if previous_condition and current_condition:
+        if previous_condition and current_condition and previous != ',' and current != ',':
             multiplied.insert(index, '*')
             index += 2
             length = len(multiplied)
@@ -156,7 +196,7 @@ def to_prefix(expression):
 
 
 def is_binary(operator):
-    return operator in OPERATORS
+    return operator in OPERATORS + ['log']
 
 
 def is_unary(operator):
