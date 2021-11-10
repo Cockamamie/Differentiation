@@ -6,8 +6,8 @@ SUPPORTED = ['Integer numbers, x variable, +, -, *, /, ^, sin, cos, tan, cot']
 
 
 def get_args_parser():
-    parser = argparse.ArgumentParser(description='Take math expression derivative')
-    parser.add_argument('-e', '--expression', required=True, nargs='*',
+    parser = argparse.ArgumentParser(description='Take math expression derivative', add_help=True)
+    parser.add_argument('-e', '--expression', nargs='*',
                         help='Differentiate given expression.'
                              '\nTo write degree in windows use double "^".'
                              '\nTo use Euler\'s number enter "e" in any case.'
@@ -22,9 +22,10 @@ def main():
     args = parser.parse_args()
     if args.supported:
         print(SUPPORTED)
-    for expression in args.expression:
-        root = parse(expression)
-        print(differentiate(root))
+    if args.expression:
+        for expression in args.expression:
+            root = parse(expression)
+            print(differentiate(root))
 
 
 if __name__ == '__main__':
