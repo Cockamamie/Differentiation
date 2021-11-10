@@ -1,14 +1,8 @@
 # Differentiation
+Version 1.0
 
-## What is it? ##
------------------
+## About ##
 University project for [Anytask](https://anytask.org/issue/238921)
-
-## Installation ##
-------------------
-
-## Modules ##
--------------
 
 ## Authors ##
 -------------
@@ -17,3 +11,24 @@ University project for [Anytask](https://anytask.org/issue/238921)
 [@C0ckamamie](https://t.me/C0ckamamie)
 
 [@blueglasses](https://t.me/blueglasses)
+
+## Requirements ##
+------------------
+* Python version not less than 3.6
+* SymPy version 1.9
+
+## Composition ##
+-----------------
+* Console version: `main.py`
+* Expression parser: `expression_parser.py`
+* Differentiator: `differentiation.py`
+* Tests: `tests.py`
+
+## Console version ##
+---------------------
+Help: `main.py --help`
+
+Launch example: `main.py -e sin(x)`
+
+
+
