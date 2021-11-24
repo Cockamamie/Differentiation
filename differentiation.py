@@ -1,5 +1,11 @@
 from sympy import E, simplify
 from interfaces import Dx, Binary, Unary
+import sys
+
+
+def invalid_expression(message='Invalid expression'):
+    print(f'Error: {message}')
+    sys.exit(1)
 
 
 def differentiate(root): return simplify(str(root.dx()))
@@ -154,9 +160,9 @@ class Cot(Dx, Unary):
 class Log(Dx, Binary):
     def __init__(self, base: Dx, arg: Dx):
         if isinstance(base, Const) and (base.value == 1 or base.value <= 0):
-            raise ValueError('Logarithm base must be greater than zero and not equal to one')
+            invalid_expression('Logarithm base must be greater than zero and not equal to one')
         if isinstance(arg, Const) and arg.value <= 0:
-            raise ValueError('Logarithm argument must be greater than zero')
+            invalid_expression('Logarithm argument must be greater than zero')
         self.base = base
         self.arg = arg
 

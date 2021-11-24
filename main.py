@@ -11,7 +11,8 @@ def get_args_parser():
                         help='Differentiate given expression.'
                              '\nTo write degree in windows use double "^".'
                              '\nTo use Euler\'s number enter "e" in any case.'
-                             '\nTo use Pi enter "pi" in any case.')
+                             '\nTo use Pi enter "pi" in any case.'
+                             '\nNote that log(x) means ln(x)')
     parser.add_argument('-s', '--supported', action='store_true',
                         help='Get list of supported number types, variables, operations and functions')
     return parser

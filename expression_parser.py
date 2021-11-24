@@ -1,4 +1,3 @@
-import sys
 from re import findall
 from differentiation import *
 from queue import Queue
@@ -15,22 +14,30 @@ PRIORITY = {'(': 0, ')': 0,
             'log': 4}
 
 
-def invalid_expression():
-    print('Error: Invalid expression')
+def invalid_expression(message):
+    print(f'Error: Invalid expression\n{" " * 7}{message}')
     sys.exit(1)
 
 
 def parse(expression):
-    split_expr = split_expression(expression)
-    bracketed = place_func_arg_brackets(split_expr)
-    multiplied = place_multi_sign(bracketed)
-    prefix_expression = to_prefix(multiplied)
-    root = to_tree(prefix_expression)
+    try:
+        split_expr = split_expression(expression)
+        bracketed = place_func_arg_brackets(split_expr)
+        multiplied = place_multi_sign(bracketed)
+        prefix_expression = to_prefix(multiplied)
+        root = to_tree(prefix_expression)
+        return root
+    except IndexError:
+        invalid_expression("If you put spaces between characters in the expression, enclose it in brackets.\n"
+                           f"{' ' * 7}Use ^ for exponentiation instead of **.\n"
+                           f"{' ' * 7}Unary arithmetic operators aren't supported.\n"
+                           f"{' ' * 7}If you want to use log(x) as natural logarithm enter ln(x) instead.")
 
-    return root
+
+def is_num(s): return len(findall(r'\d*\.\d+|\d+', s)) > 0
 
 
-def is_const(s): return s.isdigit() or s in ['pi', 'E']
+def is_const(s): return is_num(s) or s in ['pi', 'E']
 
 
 def is_param(s): return s == 'x'
@@ -97,7 +104,7 @@ def simplify(expression):
 
 
 def split(expression):
-    pattern = r'\d+|E|pi|x|\+|\-|\*|\/|\^|sin|cos|tan|cot|log|\(|\)|,'
+    pattern = r'\d*\.\d+|\d+|E|pi|x|\+|\-|\*|\/|\^|sin|cos|tan|cot|log|\(|\)|,|\.'
     return findall(pattern, expression)
 
 
@@ -106,10 +113,17 @@ def split_expression(expression):
     split_expr = split(simplified)
     reminder = simplified
     logs_count = simplified.count('log')
+    commas_count = simplified.count(',')
+    float_count = len(findall(r"d*\.\d+", expression))
+    dots_count = simplified.count('.')
+    if float_count < dots_count:
+        invalid_expression(f'Invalid symbol " . "')
+    if logs_count < commas_count:
+        invalid_expression(f'Invalid symbol " , "')
     for e in split_expr:
         reminder = reminder.replace(e, '')
     if len(reminder) - logs_count > 0:
-        invalid_expression()
+        invalid_expression(f'Invalid symbol " {reminder[0]} "')
     return split_expr
 
 
@@ -181,12 +195,12 @@ def to_prefix(expression):
             stack.append(element)
         if element == ')':
             if '(' not in stack:
-                invalid_expression()
+                invalid_expression('Misplaced brackets')
             while stack[-1] != '(':
                 q.put(stack.pop())
             stack.pop()
     if ')' in stack or '(' in stack:
-        invalid_expression()
+        invalid_expression('Misplaced brackets')
     while stack:
         q.put(stack.pop())
     res = []
@@ -215,8 +229,11 @@ def to_tree(prefix_expr):
             if element == 'x':
                 stack.append(X())
             else:
-                if element.isdigit():
-                    stack.append(Const(int(element)))
+                if is_num(element):
+                    if element.isdigit():
+                        stack.append(Const(int(element)))
+                    else:
+                        stack.append(Const(float(element)))
                 if element == 'E':
                     stack.append(Const(E))
                 if element == 'pi':
@@ -229,5 +246,5 @@ def to_tree(prefix_expr):
             left = stack.pop()
             stack.append(class_by_name[element](left, right))
     if len(stack) > 1:
-        invalid_expression()
+        invalid_expression(f'Invalid expression with symbol {stack[1]}')
     return stack[0]
